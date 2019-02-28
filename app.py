@@ -1,10 +1,17 @@
 from flask import Flask, redirect, abort, session, url_for, render_template, make_response, request
 from flask_recaptcha import ReCaptcha
 from matchmaker import Room, RoomManager, Settings, Player
+import os
 import validation
 import uuid
 
 app = Flask(__name__)
+
+work_dir = os.path.dirname(__file__)
+
+RECAPTCHA_SITE_KEY_PATH = os.path.join(work_dir, 'recaptcha_site_key')
+RECAPTCHA_SECRET_KEY_PATH = os.path.join(work_dir, 'recaptcha_secret_key')
+APP_SECRET_KEY_PATH = os.path.join(work_dir, 'secret_key')
 
 # ReCaptcha Config
 # Put your site key in a file called recaptcha_site_key
@@ -12,14 +19,14 @@ app = Flask(__name__)
 # Disabled in debug mode
 app.config.update({
     'RECAPTCHA_ENABLED': True if not app.config['DEBUG'] else False,
-    'RECAPTCHA_SITE_KEY': open('./recaptcha_site_key', 'r').read(),
-    'RECAPTCHA_SECRET_KEY': open('./recaptcha_secret_key', 'r').read()
+    'RECAPTCHA_SITE_KEY': open(RECAPTCHA_SITE_KEY_PATH, 'r').read(),
+    'RECAPTCHA_SECRET_KEY': open(RECAPTCHA_SECRET_KEY_PATH, 'r').read()
 })
 
 
 # App secret key for sessions
 # Stored in file called secret_key
-app.secret_key = open('secret_key', 'r').read()
+app.secret_key = open(APP_SECRET_KEY_PATH, 'r').read()
 
 # Protect against CSRF attacks
 @app.before_request

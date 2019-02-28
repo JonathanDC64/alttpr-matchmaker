@@ -1,11 +1,16 @@
 from flask import Flask, redirect, abort, session, url_for, render_template, make_response, request
 from flask_recaptcha import ReCaptcha
+from flask_sslify import SSLify
 from matchmaker import Room, RoomManager, Settings, Player
 import os
 import validation
 import uuid
 
 app = Flask(__name__)
+
+# only trigger SSLify if the app is running on Heroku
+if 'DYNO' in os.environ:
+    sslify = SSLify(app)
 
 work_dir = os.path.dirname(__file__)
 

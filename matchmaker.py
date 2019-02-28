@@ -107,7 +107,7 @@ class Room:
         self.add_player(creator)
 
     def add_player(self, player: Player) -> None:
-        #if ~self.is_full():
+        #if not self.is_full():
         self.__players[player.get_id()] = player
         Room.add_global_player(player)
 
@@ -153,9 +153,10 @@ class Room:
 
     def get_expire_time(self) -> str:
         expire_time = self.__expire_time - datetime.now()
-        hours = expire_time.seconds // 3600
-        minutes = (expire_time.seconds % 3600) // 60
-        seconds = (expire_time.seconds % 3600) % 60
+        total_seconds = max(expire_time.seconds, 0)
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        seconds = (total_seconds % 3600) % 60
         return f'{hours} hours, {minutes} minutes, {seconds} seconds'
 
 
@@ -182,10 +183,3 @@ class RoomManager:
 
     def is_full(self) -> bool:
         return len(self.__rooms) == self.MAX_ROOMS
-
-"""
-class User:
-    def __init__(self, player_id: str, room: str):
-        self.player_id = player_id
-        self.room = room
-"""

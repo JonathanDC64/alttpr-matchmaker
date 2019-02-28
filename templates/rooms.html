@@ -14,14 +14,15 @@
 
         <div class="tile ">
             <article
-                class="tile is-child notification is-primary">
-                <p class="title">{{ seed['logic'] }}</p>
+                class="tile is-child notification">
+                <p class="title">{{ Settings.logic[settings.logic] }}</p>
                 <p class="subtitle">
+                    by {{ room.get_creator().name() }}
                 </p>
                 <ul>
-                    <li><strong>Created by: </strong>{{ room.get_creator().name() }}</li>
-                    {#<li><strong>Capacity: </strong>{{ room.num_players() }} / {{ room.MAX_PLAYERS }}</li>#}
                     
+                    {#<li><strong>Capacity: </strong>{{ room.num_players() }} / {{ room.MAX_PLAYERS }}</li>#}
+                    <li><strong>Players In Room: </strong>{{ room.num_players() }}</li>
                     <li><strong>Difficulty: </strong>{{ Settings.difficulty[settings.difficulty]}}</li>
                     <li><strong>Goal: </strong>{{ Settings.goal[settings.goal] }}</li>
                     <li><strong>Mode: </strong>{{ Settings.mode[settings.mode] }}</li>
@@ -45,7 +46,7 @@
                     <li><strong>Expires In: </strong>{{ room.get_expire_time() }}</li>
                 </ul>
                 <br />
-                <a class="button is-primary is-inverted is-outlined is-fullwidth"
+                <a class="button is-primary is-fullwidth"
                     href="/room/{{ room.get_id() }}">Join</a>
             </article>
         </div>

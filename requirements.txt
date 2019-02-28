@@ -1,5 +1,6 @@
+requests==2.18.4
 Flask_ReCaptcha==0.4.2
 Flask==1.0.2
-requests==2.18.4
+flask_sslify==0.1.5
 typing==3.6.6
 gunicorn

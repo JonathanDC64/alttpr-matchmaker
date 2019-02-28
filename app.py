@@ -9,24 +9,18 @@ app = Flask(__name__)
 
 work_dir = os.path.dirname(__file__)
 
-RECAPTCHA_SITE_KEY_PATH = os.path.join(work_dir, 'recaptcha_site_key')
-RECAPTCHA_SECRET_KEY_PATH = os.path.join(work_dir, 'recaptcha_secret_key')
-APP_SECRET_KEY_PATH = os.path.join(work_dir, 'secret_key')
-
 # ReCaptcha Config
-# Put your site key in a file called recaptcha_site_key
-# Put your secret key in a file called recaptcha_secret_key
 # Disabled in debug mode
 app.config.update({
     'RECAPTCHA_ENABLED': True if not app.config['DEBUG'] else False,
-    'RECAPTCHA_SITE_KEY': open(RECAPTCHA_SITE_KEY_PATH, 'r').read(),
-    'RECAPTCHA_SECRET_KEY': open(RECAPTCHA_SECRET_KEY_PATH, 'r').read()
+    'RECAPTCHA_SITE_KEY': os.environ.get('RECAPTCHA_SITE_KEY'),
+    'RECAPTCHA_SECRET_KEY': os.environ.get('RECAPTCHA_SECRET_KEY')
 })
 
 
 # App secret key for sessions
 # Stored in file called secret_key
-app.secret_key = open(APP_SECRET_KEY_PATH, 'r').read()
+app.secret_key = os.environ.get('APP_SECRET_KEY')
 
 # Protect against CSRF attacks
 @app.before_request

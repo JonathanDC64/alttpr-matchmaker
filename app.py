@@ -12,8 +12,8 @@ app = Flask(__name__)
 # Disabled in debug mode
 app.config.update({
     'RECAPTCHA_ENABLED': True if not app.config['DEBUG'] else False,
-    'RECAPTCHA_SITE_KEY': open('recaptcha_site_key', 'r').read(),
-    'RECAPTCHA_SECRET_KEY': open('recaptcha_secret_key', 'r').read()
+    'RECAPTCHA_SITE_KEY': open('./recaptcha_site_key', 'r').read(),
+    'RECAPTCHA_SECRET_KEY': open('./recaptcha_secret_key', 'r').read()
 })
 
 

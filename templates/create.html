@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% if error %}
+<div class="notification is-danger">
+    {{error}}
+</div>
+{% endif %}
+
+<nav class="panel">
+    <p class="panel-heading">
+        Create Game Room
+    </p>
+    <div class="panel-block">
+        <form method="post" action="/create" class="section">
+            <!-- Name -->
+            <!--div class="field">
+                <label class="label">Name</label>
+                <div class="control">
+                    <input class="input is-primary" type="text" name="name" placeholder="Name you want to use" />
+                </div>
+            </div-->
+
+            <!-- Difficulty -->
+            <div class="field">
+                <label class="label">Difficulty</label>
+                <div class="control">
+                    <div class="select">
+                        <select name="difficulty">
+                            {% for key, value in settings.difficulty.items() %}
+                            <option value="{{key}}">{{value}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Goal -->
+            <div class="field">
+                <label class="label">Goal</label>
+                <div class="control">
+                    <div class="select">
+                        <select name="goal">
+                            {% for key, value in settings.goal.items() %}
+                            <option value="{{key}}">{{value}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logic -->
+            <div class="field">
+                <label class="label">Logic</label>
+                <div class="control">
+                    <div class="select">
+                        <select name="logic">
+                            {% for key, value in settings.logic.items() %}
+                            <option value="{{key}}">{{value}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mode -->
+            <div class="field">
+                <label class="label">Mode</label>
+                <div class="control">
+                    <div class="select">
+                        <select name="mode">
+                            {% for key, value in settings.mode.items() %}
+                            <option value="{{key}}">{{value}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Variation -->
+            <div class="field">
+                <label class="label">Variation</label>
+                <div class="control">
+                    <div class="select">
+                        <select name="variation">
+                            {% for key, value in settings.variation.items() %}
+                            <option value="{{key}}">{{value}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weapons -->
+            <div class="field">
+                <label class="label">Weapons</label>
+                <div class="control">
+                    <div class="select">
+                        <select name="weapons">
+                            {% for key, value in settings.weapons.items() %}
+                            <option value="{{key}}">{{value}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Spoilers -->
+            <div class="field">
+                <label class="label">Spoilers <input name="spoilers" type="checkbox"></label>
+            </div>
+
+            <!-- Tournament -->
+            <div class="field">
+                <label class="label">Tournament <input name="tournament" type="checkbox"></label>
+            </div>
+
+            <!-- Enemizer -->
+            <div class="field">
+                <label class="label">Enemizer <input name="enemizer" type="checkbox"></label>
+            </div>
+
+            {{ recaptcha }}
+            
+            <input name=_csrf_token type=hidden value="{{ csrf_token() }}">
+
+            <br/>
+
+            <!-- Submit-->
+            <div class="control">
+                <button type="submit" class="button is-primary">Submit</button>
+            </div>
+        </form>
+    </div>
+</nav>
+
+{% endblock %}

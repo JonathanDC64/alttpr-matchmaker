@@ -1,0 +1,37 @@
+<!doctype html>
+
+<html>
+
+<head>
+    <title>ALTTPR Match Maker</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.4/css/bulma.min.css">
+    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    {% include 'header.html' %}
+    <section class="section">
+        <div class="container">
+            {% block content %}
+            {% endblock %}
+
+            {% if not request.cookies.get('cookies') %}
+            <div id="cookiePopup" class="notification is-primary">
+                <!--button id="cookieCloseButton" class="delete"></button-->
+                <p class="title">Cookies</p>
+                <p>This website may use cookies to save preferences</p>
+                <br/>
+                <a id="cookieAcceptButton" class="button is-primary is-inverted is-outlined is-fullwidth" href="/cookies">Accept</a>
+            </div>
+            {% endif %}
+        </div>
+
+
+    </section>
+
+</body>
+
+</html>

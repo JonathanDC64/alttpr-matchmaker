@@ -1,0 +1,12 @@
+#cookiePopup
+{
+    position: fixed;
+
+    right: 1em;
+    bottom: 1em;
+}
+
+#tlkio iframe
+{
+    height: 100%;
+}

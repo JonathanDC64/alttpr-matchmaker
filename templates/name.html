@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% if error %}
+<div class="notification is-danger">
+    {{error}}
+</div>
+{% endif %}
+
+<nav class="panel">
+    <p class="panel-heading">
+        Set Name
+    </p>
+    <div class="panel-block">
+        <form method="post" action="/name{% if redir %}/{{ redir }}{% endif %}" class="section">
+            <!-- Name -->
+            <div class="field">
+                <label class="label">Name</label>
+                <div class="control">
+                    <input class="input is-primary" type="text" name="name" placeholder="Name you want to use" />
+                </div>
+            </div>
+
+            {{ recaptcha }}
+            
+            <input name=_csrf_token type=hidden value="{{ csrf_token() }}">
+
+            <br/>
+
+            <!-- Submit-->
+            <div class="control">
+                <button type="submit" class="button is-primary">Submit</button>
+            </div>
+        </form>
+    </div>
+</nav>
+
+{% endblock %}

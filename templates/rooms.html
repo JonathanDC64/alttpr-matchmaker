@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<a class="button is-large is-fullwidth is-success" href="/create">Create Room</a>
+
+<br />
+
+<div class="columns is-multiline">
+    {% for key, room in rooms.items() %}
+    {% set seed = room.get_seed_data() %}
+    {% set settings = room.get_settings() %}
+    <div class="column is-4">
+
+        <div class="tile ">
+            <article
+                class="tile is-child notification is-primary">
+                <p class="title">{{ seed['logic'] }}</p>
+                <p class="subtitle">
+                </p>
+                <ul>
+                    <li><strong>Created by: </strong>{{ room.get_creator().name() }}</li>
+                    {#<li><strong>Capacity: </strong>{{ room.num_players() }} / {{ room.MAX_PLAYERS }}</li>#}
+                    
+                    <li><strong>Difficulty: </strong>{{ Settings.difficulty[settings.difficulty]}}</li>
+                    <li><strong>Goal: </strong>{{ Settings.goal[settings.goal] }}</li>
+                    <li><strong>Mode: </strong>{{ Settings.mode[settings.mode] }}</li>
+                    <li><strong>Variation: </strong>{{ Settings.variation[settings.variation] }}</li>
+                    <li><strong>Weapons: </strong>{{ Settings.weapons[settings.weapons] }}</li>
+
+                    {% if settings.enemizer %}
+                    <li><strong>Enemizer</strong></li>
+                    {% endif %}
+
+                    {% if settings.spoilers %}
+                    <li><strong>Spoilers </strong></li>
+                    {% endif %}
+
+                    {% if settings.tournament %}
+                    <li><strong>Tournament</strong></li>
+                    {% endif %}
+
+                    {#<li><strong>Seed Hash: </strong>{{ seed['hash'] }}</li>#}
+                    {#<li><strong>Generated On: </strong>{{ seed['generated'] }}</li>#}
+                    <li><strong>Expires In: </strong>{{ room.get_expire_time() }}</li>
+                </ul>
+                <br />
+                <a class="button is-primary is-inverted is-outlined is-fullwidth"
+                    href="/room/{{ room.get_id() }}">Join</a>
+            </article>
+        </div>
+
+    </div>
+
+    {% endfor %}
+</div>
+
+{% endblock %}

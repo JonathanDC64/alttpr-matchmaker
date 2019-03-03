@@ -14,11 +14,12 @@
             <div class="column is-12">
                 <nav class="panel">
                     <p class="panel-heading">
-                        Game Room : {{ room.id }}
+                        Game Room : {{ room.hash_code }}
                     </p>
                     <div class="panel-block">
                         <ul>
-                            <li><strong>Seed URL: </strong><a href={{ room.get_seed_url() }}>{{ room.get_seed_url() }}</a></li>
+                            <li><strong>Seed URL: </strong><a
+                                    href={{ room.get_seed_url() }}>{{ room.get_seed_url() }}</a></li>
                             <li><strong>Created by: </strong>{{ room.creator.name }}</li>
                             <li><strong>Players In Room: </strong>{{ room.players|length }}</li>
                             <li><strong>Difficulty: </strong>{{ room.settings.difficulty.description }}</li>
@@ -49,21 +50,54 @@
             <div class="column is-12">
                 <a class="button is-primary is-fullwidth" href="/leave/{{ room.hash_code }}">Leave Room</a>
             </div>
+            {% if room.creator == player %}
+            <div class="column is-12">
+                <a class="button is-danger is-fullwidth" href="/remove/{{ room.hash_code }}">Remove Room</a>
+            </div>
+            {% endif %}
+            <div class="column is-12">
+                <form method="POST" action="/time/{{ room.hash_code }}">
+                    <div class="field has-addons">
+                        <p class="control">
+                            <a class="button">
+                                My Time
+                            </a>
+                        </p>
+                        <p class="control is-expanded">
+                            <input class="input" type="number"  min="0" name="hours" placeholder="Hours">
+                        </p>
+                        <p class="control is-expanded">
+                            <input class="input" type="number" min="0" max="59" name="minutes" placeholder="Minutes">
+                        </p>
+                        <p class="control is-expanded">
+                            <input class="input" type="number" min="0" max="59" name="seconds" placeholder="Seconds">
+                        </p>
+                        <input name=_csrf_token type=hidden value="{{ csrf_token() }}">
+                        <p class="control">
+                            <button class="button is-info" type="submit">
+                                Enter
+                            </button>
+                        </p>
+                    </div>
+                </form>
+            </div>
             <div class="column is-12">
                 <table class="table is-bordered is-striped is-hoverable is-fullwidth">
                     <thead>
                         <tr>
-                            <th><abbr title="Players">Players</abbr></th>
+                            <th><abbr title="Player">Player</abbr></th>
                             <th><abbr title="Time">Time</abbr></th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for player in room.players %}
+                        {% if room_times %}
+                        {% for room_time in room_times %}
                         <tr>
-                            <td>{{ player.name }}</td>
-                            <td></td>
+                            <td>{{ room_time.player.name }}</td>
+                            <td>{{ room_time.get_time_str() }}</td>
                         </tr>
                         {% endfor %}
+                        {% endif %}
                     </tbody>
                 </table>
             </div>
@@ -71,7 +105,8 @@
     </div>
 
     <div class="column">
-        <div id="tlkio" data-channel="alttpr_{{ room.hash_code }}" data-nickname="{{ player.name }}" style="width:100%;height:400px;"></div>
+        <div id="tlkio" data-channel="alttpr_{{ room.hash_code }}" data-nickname="{{ player.name }}"
+            style="width:100%;height:400px;"></div>
         <script async src="https://tlk.io/embed.js" type="text/javascript"></script>
     </div>
 </div>

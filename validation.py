@@ -34,3 +34,22 @@ def validate_name(name: str) -> (bool, str):
 		return True, ''
 	else:
 		return False, f'Name must contain {MAX_NAME_LENGTH} characters or less.'
+
+def validate_time(hours: str, minutes: str, seconds: str) -> (bool, str):
+	"""Validate game time"""
+	if not hours:
+		return False, 'Missing hours.'
+	if not minutes:
+		return False, 'Missing minutes.'
+	if not seconds:
+		return False, 'Missing seconds.'
+	if hours.isdigit() and minutes.isdigit() and seconds.isdigit():
+		return False, 'Values must be numeric.'
+	hours, minutes, seconds = int(hours), int(minutes), int(seconds)
+	if hours < 0:
+		return False, 'Hours must be larger than or equal to 0.'
+	if minutes < 0 or minutes > 59:
+		return False, 'Minutes must be between 0 and 59.'
+	if seconds < 0 or seconds > 59:
+		return False, 'Seconds must be between 0 and 59.'
+	return True, ''

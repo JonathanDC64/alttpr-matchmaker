@@ -46,7 +46,6 @@ weapons = {
 	'swordless': "Swordless"
 }
 
-
 class Difficulty(db.Model):
 
 	id = db.Column(db.Integer, primary_key=True)
@@ -59,7 +58,6 @@ class Difficulty(db.Model):
 
 	def __repr__(self):
 		return f'<id {self.id}>'
-
 
 class Goal(db.Model):
 
@@ -74,7 +72,6 @@ class Goal(db.Model):
 	def __repr__(self):
 		return f'<id {self.id}>'
 
-
 class Logic(db.Model):
 
 	id = db.Column(db.Integer, primary_key=True)
@@ -87,7 +84,6 @@ class Logic(db.Model):
 
 	def __repr__(self):
 		return f'<id {self.id}>'
-
 
 class Mode(db.Model):
 
@@ -102,7 +98,6 @@ class Mode(db.Model):
 	def __repr__(self):
 		return f'<id {self.id}>'
 
-
 class Variation(db.Model):
 
 	id = db.Column(db.Integer, primary_key=True)
@@ -116,7 +111,6 @@ class Variation(db.Model):
 	def __repr__(self):
 		return f'<id {self.id}>'
 
-
 class Weapons(db.Model):
 
 	id = db.Column(db.Integer, primary_key=True)
@@ -129,7 +123,6 @@ class Weapons(db.Model):
 
 	def __repr__(self):
 		return f'<id {self.id}>'
-
 
 class Settings(db.Model):
 
@@ -185,12 +178,6 @@ class Settings(db.Model):
 			"weapons": self.weapons.name
 		}
 
-
-
-
-
-
-
 class Player(db.Model):
 
 	id = db.Column(db.Integer, primary_key=True)
@@ -217,6 +204,7 @@ class Room(db.Model):
 	creator = db.relationship('Player', foreign_keys="Room.creator_id")
 
 	hash_code = db.Column(db.String(50))
+	create_time = db.Column(db.DateTime())
 	expire_time = db.Column(db.DateTime())
 
 	def __init__(self, settings, chat_url, creator, hash_code):
@@ -225,6 +213,7 @@ class Room(db.Model):
 		self.players.append(creator)
 		self.creator = creator
 		self.hash_code = hash_code
+		self.create_time = datetime.now()
 		self.expire_time = datetime.now() + timedelta(hours=6)
 
 	def get_seed_url(self):
@@ -238,11 +227,22 @@ class Room(db.Model):
 		seconds = (total_seconds % 3600) % 60
 		return f'{hours} hours, {minutes} minutes, {seconds} seconds'
 
-room_player = db.Table(
-		'room_player',
-		db.Column('room_id', db.Integer, db.ForeignKey(Room.id), primary_key=True),
-		db.Column('player_id', db.Integer, db.ForeignKey(Player.id), primary_key=True)
-	)
+class RoomPlayer(db.Model):
+	room_id = db.Column(db.Integer, db.ForeignKey(Room.id), primary_key=True)
+	room = db.relationship('Room', foreign_keys="RoomPlayer.room_id")
+	player_id = db.Column(db.Integer, db.ForeignKey(Player.id), primary_key=True)
+	player = db.relationship('Player', foreign_keys="RoomPlayer.player_id")
+	time = db.Column(db.Integer, default=None)
+	
+	def get_time_str(self):
+		if self.time:
+			total_seconds = self.time
+			hours = total_seconds // 3600
+			minutes = (total_seconds % 3600) // 60
+			seconds = (total_seconds % 3600) % 60
+			return f'{hours:02d}:{minutes:02d}:{seconds:02d}'
+		else:
+			return '-'
 
 def init_db_values():
 	# Create static settings data if it doesnt already exist

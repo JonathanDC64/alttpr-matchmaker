@@ -7,17 +7,23 @@
 <br />
 
 <div class="columns is-multiline">
+    {% if rooms|length == 0 %}
+    <div class="column is-12">
+        <div class="notification is-danger">
+            No rooms
+        </div>
+    </div>
+    {% endif %}
     {% for room in rooms %}
     <div class="column is-4">
 
         <div class="tile ">
-            <article
-                class="tile is-child notification">
+            <article class="tile is-child notification">
                 <p class="title">{{ room.settings.logic.description }}</p>
                 <p class="subtitle">
                     by {{ room.creator.name }}
                 </p>
-                <ul>                    
+                <ul>
                     <li><strong>Players In Room: </strong>{{ room.players|length }}</li>
                     <li><strong>Difficulty: </strong>{{ room.settings.difficulty.description }}</li>
                     <li><strong>Goal: </strong>{{ room.settings.goal.description }}</li>
@@ -42,8 +48,7 @@
                     <li><strong>Expires In: </strong>{{ room.get_expire_time() }}</li>
                 </ul>
                 <br />
-                <a class="button is-primary is-fullwidth"
-                    href="/room/{{ room.hash_code }}">Join</a>
+                <a class="button is-primary is-fullwidth" href="/room/{{ room.hash_code }}">Join</a>
             </article>
         </div>
 

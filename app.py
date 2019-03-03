@@ -10,9 +10,7 @@ import validation
 import alttpr_api
 import chat
 
-# TODO Add way to save time to room
 # TODO Add way to clean up expired database entries
-
 
 app = Flask(__name__)
 
@@ -59,7 +57,7 @@ toolbar = DebugToolbarExtension(app)
 # Connect SQLAlchemy to app
 db = SQLAlchemy(app)
 
-from database import Player, Room, Settings, Difficulty, Logic, Goal, Mode, Variation, Weapons, init_db_values
+from database import Player, Room, RoomPlayer, Settings, Difficulty, Logic, Goal, Mode, Variation, Weapons, init_db_values
 
 init_db_values()
 
@@ -105,7 +103,7 @@ def index():
 # Rooms listing
 @app.route('/rooms')
 def rooms():
-	rooms = Room.query.all()
+	rooms = Room.query.order_by(Room.create_time.desc()).all()
 	return render_template('rooms.html', rooms=rooms)
 
 
@@ -192,7 +190,8 @@ def room(room_id):
 		if not player in room.players:
 			room.players.append(player)
 			db.session.commit()
-		return render_template('room.html', player=player, room=room, error=None)
+		room_times = RoomPlayer.query.join(Room).filter(Room.hash_code==room_id).all()
+		return render_template('room.html', player=player, room=room, room_times=room_times, error=None)
 
 
 @app.route('/leave/<room_id>')
@@ -208,6 +207,47 @@ def leave(room_id: str):
 		room.players.remove(player)
 		db.session.commit()
 	return redirect('/rooms')
+
+
+@app.route('/remove/<room_id>')
+def remove(room_id):
+	room = Room.query.filter_by(hash_code=room_id).first()
+	player_id = request.cookies.get('uuid')
+	player = Player.query.filter_by(uuid=player_id).first()
+
+	if player_id and player and room and room.creator == player:
+		db.session.delete(room)
+		db.session.commit()
+	
+	return redirect('/rooms')
+
+
+@app.route('/time/<room_id>', methods=['POST'])
+def time(room_id):
+	room = Room.query.filter_by(hash_code=room_id).first()
+	player_id = request.cookies.get('uuid')
+	player = Player.query.filter_by(uuid=player_id).first()
+
+	if player_id and player and room and player in room.players:
+		hours = request.form.get('hours')
+		minutes = request.form.get('minutes')
+		seconds = request.form.get('seconds')
+
+		time_validation, time_error = validation.validate_time(hours, minutes, seconds)
+
+		if not validation:
+			return redirect(f'/room/{room_id}')
+
+		time = int(seconds) + (int(minutes) * 60) + (int(hours) * 60  * 60)
+
+		room_player = RoomPlayer.query.filter(RoomPlayer.room==room, RoomPlayer.player==player).first()
+
+		room_player.time = time
+
+		#db.session.add(room_player)
+		db.session.commit()
+	return redirect(f'/room/{room_id}')
+
 
 # Accept and enable cookies
 @app.route('/cookies')

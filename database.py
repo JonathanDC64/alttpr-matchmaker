@@ -245,26 +245,21 @@ room_player = db.Table(
 	)
 
 def init_db_values():
-	#db.session.commit()
-	#db.drop_all()
+	# Create static settings data if it doesnt already exist
+	if not Settings.__table__.exists(db.engine):
+		settings = [
+			(difficulty, Difficulty),
+			(goal, Goal),
+			(logic, Logic),
+			(mode, Mode),
+			(variation, Variation),
+			(weapons, Weapons)
+		]
+		for setting_values, setting_type in settings:
+			setting_type.__table__.create(db.engine, checkfirst=True)
+			for name, description in setting_values.items():
+				entry = setting_type(name, description)
+				db.session.add(entry)
 
-	settings = [
-		(difficulty, Difficulty),
-		(goal, Goal),
-		(logic, Logic),
-		(mode, Mode),
-		(variation, Variation),
-		(weapons, Weapons)
-	]
-	room_player.drop(db.engine, checkfirst=True)
-	Room.__table__.drop(db.engine, checkfirst=True)
-	Settings.__table__.drop(db.engine, checkfirst=True)
-	for setting_values, setting_type in settings:
-		setting_type.__table__.drop(db.engine, checkfirst=True)
-		setting_type.__table__.create(db.engine, checkfirst=True)
-		for name, description in setting_values.items():
-			entry = setting_type(name, description)
-			db.session.add(entry)
-
-	db.create_all()
-	db.session.commit()
+		db.create_all()
+		db.session.commit()

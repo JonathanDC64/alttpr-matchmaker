@@ -10,6 +10,9 @@ import validation
 import alttpr_api
 import chat
 
+# TODO Add way to save time to room
+# TODO Add way to clean up expired database entries
+
 
 app = Flask(__name__)
 
@@ -22,7 +25,12 @@ POSTGRES = {
 	'port':     environ.get('DATABASE_PORT')
 }
 
-DATABASE_URI = f'postgresql://{POSTGRES["user"]}:{POSTGRES["pw"]}@{POSTGRES["host"]}/{POSTGRES["db"]}'
+DATABASE_URI = ''
+
+if environ.get('DATABASE_URL'):
+	DATABASE_URI = environ.get('DATABASE_URL')
+else:
+	DATABASE_URI = f'postgresql://{POSTGRES["user"]}:{POSTGRES["pw"]}@{POSTGRES["host"]}/{POSTGRES["db"]}'
 
 # only trigger SSLify if the app is running on Heroku
 if 'DYNO' in environ:

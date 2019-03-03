@@ -20,7 +20,6 @@
 
             {% if not request.cookies.get('cookies') %}
             <div id="cookiePopup" class="notification is-primary">
-                <!--button id="cookieCloseButton" class="delete"></button-->
                 <p class="title">Cookies</p>
                 <p>This website may use cookies to save preferences</p>
                 <br/>
@@ -31,7 +30,7 @@
 
 
     </section>
-
+    {% include "footer.html" %}
 </body>
 
 </html>

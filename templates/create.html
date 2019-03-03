@@ -28,8 +28,8 @@
                 <div class="control">
                     <div class="select">
                         <select name="difficulty">
-                            {% for key, value in settings.difficulty.items() %}
-                            <option value="{{key}}">{{value}}</option>
+                            {% for item in settings["difficulty"] %}
+                            <option value="{{item.name}}">{{item.description}}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -42,8 +42,8 @@
                 <div class="control">
                     <div class="select">
                         <select name="goal">
-                            {% for key, value in settings.goal.items() %}
-                            <option value="{{key}}">{{value}}</option>
+                            {% for item in settings["goal"] %}
+                            <option value="{{item.name}}">{{item.description}}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -56,8 +56,8 @@
                 <div class="control">
                     <div class="select">
                         <select name="logic">
-                            {% for key, value in settings.logic.items() %}
-                            <option value="{{key}}">{{value}}</option>
+                            {% for item in settings["logic"] %}
+                            <option value="{{item.name}}">{{item.description}}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -70,8 +70,8 @@
                 <div class="control">
                     <div class="select">
                         <select name="mode">
-                            {% for key, value in settings.mode.items() %}
-                            <option value="{{key}}">{{value}}</option>
+                            {% for item in settings["mode"] %}
+                            <option value="{{item.name}}">{{item.description}}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -84,8 +84,8 @@
                 <div class="control">
                     <div class="select">
                         <select name="variation">
-                            {% for key, value in settings.variation.items() %}
-                            <option value="{{key}}">{{value}}</option>
+                            {% for item in settings["variation"] %}
+                            <option value="{{item.name}}">{{item.description}}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -98,8 +98,8 @@
                 <div class="control">
                     <div class="select">
                         <select name="weapons">
-                            {% for key, value in settings.weapons.items() %}
-                            <option value="{{key}}">{{value}}</option>
+                            {% for item in settings["weapons"] %}
+                            <option value="{{item.name}}">{{item.description}}</option>
                             {% endfor %}
                         </select>
                     </div>

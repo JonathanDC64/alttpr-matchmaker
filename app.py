@@ -1,45 +1,74 @@
-from flask import Flask, redirect, abort, session, url_for, render_template, make_response, request
+"""Main Flask App"""
+from os import environ, path
+from uuid import uuid4
+from flask import Flask, redirect, abort, session, render_template, make_response, request
 from flask_recaptcha import ReCaptcha
 from flask_sslify import SSLify
-from matchmaker import Room, RoomManager, Settings, Player
-import os
+from flask_sqlalchemy import SQLAlchemy
+from flask_debugtoolbar import DebugToolbarExtension
 import validation
-import uuid
+import alttpr_api
+import chat
+
 
 app = Flask(__name__)
 
-# only trigger SSLify if the app is running on Heroku
-if 'DYNO' in os.environ:
-    sslify = SSLify(app)
 
-work_dir = os.path.dirname(__file__)
+POSTGRES = {
+	'user':     environ.get('DATABASE_USER'),
+	'pw':      environ.get('DATABASE_PASSWORD'),
+	'db':       environ.get('DATABASE_NAME'),
+	'host':    environ.get('DATABASE_HOST'),
+	'port':     environ.get('DATABASE_PORT')
+}
+
+DATABASE_URI = f'postgresql://{POSTGRES["user"]}:{POSTGRES["pw"]}@{POSTGRES["host"]}/{POSTGRES["db"]}'
+
+# only trigger SSLify if the app is running on Heroku
+if 'DYNO' in environ:
+	sslify = SSLify(app)
+
+work_dir = path.dirname(__file__)
 
 # ReCaptcha Config
 # Disabled in debug mode
 app.config.update({
-    'RECAPTCHA_ENABLED': True if not app.config['DEBUG'] else False,
-    'RECAPTCHA_SITE_KEY': os.environ.get('RECAPTCHA_SITE_KEY'),
-    'RECAPTCHA_SECRET_KEY': os.environ.get('RECAPTCHA_SECRET_KEY')
+	'RECAPTCHA_ENABLED': True if not app.config['DEBUG'] else False,
+	'RECAPTCHA_SITE_KEY': environ.get('RECAPTCHA_SITE_KEY'),
+	'RECAPTCHA_SECRET_KEY': environ.get('RECAPTCHA_SECRET_KEY'),
+	'SQLALCHEMY_DATABASE_URI': DATABASE_URI,
+	'SQLALCHEMY_TRACK_MODIFICATIONS': False,
+	#"SQLALCHEMY_ECHO": True
 })
 
 
 # App secret key for sessions
 # Stored in file called secret_key
-app.secret_key = os.environ.get('APP_SECRET_KEY')
+app.secret_key = environ.get('APP_SECRET_KEY')
+
+toolbar = DebugToolbarExtension(app)
+
+# Connect SQLAlchemy to app
+db = SQLAlchemy(app)
+
+from database import Player, Room, Settings, Difficulty, Logic, Goal, Mode, Variation, Weapons, init_db_values
+
+init_db_values()
+
 
 # Protect against CSRF attacks
 @app.before_request
 def csrf_protect():
-    if request.method == "POST":
-        token = session.pop('_csrf_token', None)
-        if not token or token != request.form.get('_csrf_token'):
-            abort(403)
+	if request.method == "POST":
+		token = session.pop('_csrf_token', None)
+		if not token or token != request.form.get('_csrf_token'):
+			abort(403)
 
 
 def generate_csrf_token():
-    if '_csrf_token' not in session:
-        session['_csrf_token'] = str(uuid.uuid4())
-    return session['_csrf_token']
+	if '_csrf_token' not in session:
+		session['_csrf_token'] = str(uuid4())
+	return session['_csrf_token']
 
 
 # Enable the use of csrf tokens in jinja templates
@@ -48,168 +77,181 @@ app.jinja_env.globals['csrf_token'] = generate_csrf_token  # pylint: disable=no-
 # Global var to handle recaptcha
 recaptcha = ReCaptcha(app=app)
 
-room_manager = RoomManager()
+settings_values = {
+	"difficulty": Difficulty.query.all(),
+	"goal": Goal.query.all(),
+	"logic": Logic.query.all(),
+	"mode": Mode.query.all(),
+	"variation": Variation.query.all(),
+	"weapons": Weapons.query.all()
+}
+
+
 
 # Main page
 @app.route('/')
 def index():
-    return render_template('index.html')
+	return render_template('index.html')
+
 
 # Rooms listing
 @app.route('/rooms')
 def rooms():
-    return render_template('rooms.html', rooms=room_manager.get_rooms(), Settings=Settings)
+	rooms = Room.query.all()
+	return render_template('rooms.html', rooms=rooms)
+
 
 # Room creation form
 @app.route('/create', methods=['GET', 'POST'])
 def create():
-    # Get player id stored in a cookie
-    player_id = request.cookies.get('id')
-    # List of all players on the website
-    players = Room.player_pool
+	# Get player id stored in a cookie
+	player_id = request.cookies.get('uuid')
+	# List of all players on the website
+	player = Player.query.filter_by(uuid=player_id).first()
 
-    # If user doesnt have a name and id assigned, redirect them to create one
-    if not player_id or not player_id in players.keys():
-        return redirect('/name/create')
+	# If user doesnt have a name and id assigned, redirect them to create one
+	if not player_id or not player:
+		return redirect('/name/create')
 
-    if request.method == 'POST':
+	if request.method == 'POST':
 
-        # Get the players info
-        player = players[player_id]
+		# User has not accepted the use of cookies
+		if not request.cookies.get('cookies'):
+			return render_template('create.html', settings=settings_values, error='You must accept the use of cookies before proceeding.')
 
-        # User has not accepted the use of cookies
-        if not request.cookies.get('cookies'):
-            return render_template('create.html', settings=Settings, error='You must accept the use of cookies before proceeding.')
+		# Validate recaptcha
+		if not recaptcha.verify():
+			return render_template('create.html', settings=settings_values, error='ReCaptcha failed.')
 
-        # Validate recaptcha
-        if not recaptcha.verify():
-            return render_template('create.html', settings=Settings, error='ReCaptcha failed.')
+		difficulty = Difficulty.query.filter_by(name=request.form.get('difficulty')).first()
+		goal = Goal.query.filter_by(name=request.form.get('goal')).first()
+		logic = Logic.query.filter_by(name=request.form.get('logic')).first()
+		mode = Mode.query.filter_by(name=request.form.get('mode')).first()
+		variation = Variation.query.filter_by(name=request.form.get('variation')).first()
+		weapons = Weapons.query.filter_by(name=request.form.get('weapons')).first()
+	
+		settings = Settings(difficulty, bool(request.form.get('enemizer')), goal, logic, mode, bool(
+			request.form.get('spoilers')), bool(request.form.get('tournament')), variation, weapons)
 
-        # Gather settings input from game form
-        settings = Settings(
-            request.form.get('difficulty'),
-            request.form.get('enemizer'),
-            request.form.get('goal'),
-            'en',
-            request.form.get('logic'),
-            request.form.get('mode'),
-            request.form.get('spoilers'),
-            request.form.get('tournament'),
-            request.form.get('variation'),
-            request.form.get('weapons'),
-        )
+		settings_validate, settings_error = validation.validate_settings(settings)
 
-        settings_validate, settings_error = validation.validate_settings(
-            settings)
+		# Make certain that all selected settings exist
+		if not settings_validate:
+			return render_template('create.html', settings=settings, error=settings_error)
 
-        # Make certain that all selected settings exist
-        if not settings_validate:
-            return render_template('create.html', settings=Settings, error=settings_error)
+		seed = alttpr_api.generate_seed(settings.to_dict())
 
-        # Create a game room
-        room = room_manager.create_room(settings, player)
+		hash_code = seed['hash']
 
-        # generate response that redirects to the game room just created
-        response = make_response(redirect(f'/room/{room.get_id()}'))
+		chat_url = chat.get_chat_room(hash_code)
 
-        return response
-    else:
-        return render_template('create.html', settings=Settings, error=None)
+		# Create a game room
+		room =  Room(settings=settings, chat_url=chat_url, creator=player, hash_code=hash_code)
+
+		#db.session.add(settings)
+		db.session.add(room)
+
+		db.session.commit()
+
+		# generate response that redirects to the game room just created
+		response = make_response(redirect(f'/room/{room.hash_code}'))
+
+		return response
+	else:
+		return render_template('create.html', settings=settings_values, error=None)
 
 
 @app.route('/room/<room_id>')
 def room(room_id):
-    # List of all game rooms
-    rooms = room_manager.get_rooms()
-    # Get current game room based on url paramater room_id
-    room = rooms.get(room_id)
-    # Get the players id stored in the cookie
-    player_id = request.cookies.get('id')
+	# List of all game rooms
+	rooms = Room.query.all()
+	# Get current game room based on url paramater room_id
+	room = Room.query.filter_by(hash_code=room_id).first()
+	# Get the players id stored in the cookie
+	player_id = request.cookies.get('uuid')
+	player = Player.query.filter_by(uuid=player_id).first()
 
-    # Validate that the room exists
-    if not room:
-        return render_template('room.html', error='Room does not exist.')
+	# Validate that the room exists
+	if not room:
+		return render_template('room.html', error='Room does not exist.')
 
-    # Validate that the player exists
-    elif not player_id or not player_id in Room.player_pool.keys():
-        return redirect(f'/name/room/{room_id}')
+	# Validate that the player exists
+	elif not player_id or not player:
+		return redirect(f'/name/room/{room_id}')
 
-    # Join the room
-    else:
-        # Get player data from the player pool and add them to this room
-        player: Player = Room.player_pool[player_id]
-        room.add_player(player)
-        return render_template('room.html', player_id=player_id, name=player.name(), room=room, id=room_id, Settings=Settings, error=None)
+	# Join the room
+	else:
+		if not player in room.players:
+			room.players.append(player)
+			db.session.commit()
+		return render_template('room.html', player=player, room=room, error=None)
 
 
 @app.route('/leave/<room_id>')
 def leave(room_id: str):
-    # Get room the user desires to leave
-    room = room_manager.get_rooms().get(room_id)
-    # Get the players id from the cookie
-    player_id = request.cookies.get('id')
-    # Get player data
-    player = room.get_players().get(player_id)
-    # validate that room and player exists and that the player is in the room
-    if room and player and player_id in room.get_players().keys():
-        room.remove_player(player)
-    return redirect('/rooms')
+	# Get room the user desires to leave
+	room = Room.query.filter_by(hash_code=room_id).first()
+	# Get the players id from the cookie
+	player_id = request.cookies.get('uuid')
+	# Get player data
+	player = Player.query.filter_by(uuid=player_id).first()
+	# validate that room and player exists and that the player is in the room
+	if room and player and player in room.players:
+		room.players.remove(player)
+		db.session.commit()
+	return redirect('/rooms')
 
 # Accept and enable cookies
 @app.route('/cookies')
 def cookie_accept():
-    origin = request.referrer
-    response = make_response(redirect(origin))
-    response.set_cookie('cookies', b'true')
-    return response
-
-
-def set_name(name: str, response) -> Player:
-    player_id = request.cookies.get('id')
-    players = Room.player_pool
-    # If player already exists, just change the name
-    if player_id and player_id in players.keys():
-        players[player_id].set_name(name)
-        return players[player_id]
-    else:
-        player: Player = Player(name)
-        Room.add_global_player(player)
-        response.set_cookie('id', player.get_id())
-        return player
+	origin = request.referrer
+	response = make_response(redirect(origin))
+	response.set_cookie('cookies', b'true')
+	return response
 
 
 # Page to set your name
 @app.route('/name', methods=['GET', 'POST'])
 @app.route('/name/<path:redir>', methods=['GET', 'POST'])
 def name(redir=None):
-    if request.method == 'POST':
-        
-        # Redirect to previous page after setting name
-        # TODO: Check for security flaws with this technique
-        response = None
-        if redir:
-            response = make_response(redirect(f'/{redir}'))
-        else:
-            response = make_response(render_template(
-                'name.html', error=None, redir=redir))
+	if request.method == 'POST':
+		# Redirect to previous page after setting name
+		# TODO: Check for security flaws with this technique
+		response = None
+		if redir:
+			response = make_response(redirect(f'/{redir}'))
+		else:
+			response = make_response(render_template(
+				'name.html', error=None, redir=redir))
 
-        # Validate that the user accepted the use of cookies
-        if not request.cookies.get('cookies'):
-            return render_template('name.html', error='You must accept the use of cookies before proceeding.', redir=redir)
+		# Validate that the user accepted the use of cookies
+		if not request.cookies.get('cookies'):
+			return render_template('name.html', error='You must accept the use of cookies before proceeding.', redir=redir)
 
-        # Validate recaptcha
-        if not recaptcha.verify():
-            return render_template('name.html', error='ReCaptcha failed.', redir=redir)
+		# Validate recaptcha
+		if not recaptcha.verify():
+			return render_template('name.html', error='ReCaptcha failed.', redir=redir)
 
-        # Get and valiate chosen name
-        name = request.form.get('name')
-        name_validation, name_error = validation.validate_name(name)
-        if not name_validation:
-            return render_template('name.html', error=name_error, redir=redir)
+		# Get and valiate chosen name
+		name = request.form.get('name')
+		name_validation, name_error = validation.validate_name(name)
+		if not name_validation:
+			return render_template('name.html', error=name_error, redir=redir)
 
-        set_name(name, response)
+		player_id = request.cookies.get('uuid')
+		player = Player.query.filter_by(uuid=player_id).first()
 
-        return response
+		# If player already exists, just change the name
+		if player_id and player:
+			player.name = name
+		else:
+			player: Player = Player(name)
+			db.session.add(player)
+			response.set_cookie('uuid', player.uuid)
 
-    else:
-        return render_template('name.html', error=None, redir=redir)
+		db.session.commit()
+
+		return response
+
+	else:
+		return render_template('name.html', error=None, redir=redir)
